@@ -3,13 +3,13 @@ package physarum
 import (
 	"fmt"
 	"image/png"
-	"math/rand"
+	// "math/rand"
 	"time"
 )
 
 const (
-	width      = 1024
-	height     = 1024
+	width      = 1 << 9
+	height     = 1 << 9
 	particles  = 1 << 22
 	iterations = 400
 	blurRadius = 1
@@ -17,6 +17,7 @@ const (
 	zoomFactor = 1
 )
 
+// just produce the final frame
 func one(model *Model, iterations int) {
 	now := time.Now().UTC().UnixNano() / 1000
 	path := fmt.Sprintf("out%d.png", now)
@@ -33,6 +34,7 @@ func one(model *Model, iterations int) {
 	SavePNG(path, im, png.DefaultCompression)
 }
 
+// produce multiple frames
 func frames(model *Model, rate int) {
 	palette := RandomPalette()
 
@@ -58,26 +60,44 @@ func frames(model *Model, rate int) {
 	}
 }
 
-func Run() {
-	if false {
-		n := 2 + rand.Intn(4)
-		configs := RandomConfigs(n)
-		table := RandomAttractionTable(n)
-		model := NewModel(
-			width, height, particles, blurRadius, blurPasses, zoomFactor,
-			configs, table)
-		frames(model, 3)
+func ConfigVaryRotationAngle(as []float32) []Config {
+	n := len(as)
+	configs := make([]Config, n)
+	for index, a := range as {
+		configs[index] = Config{
+			SensorAngle:      Radians(45),
+			SensorDistance:   32,
+			RotationAngle:    Radians(a),
+			StepDistance:     1,
+			DepositionAmount: 5,
+			DecayFactor:      0.1,
+		}
 	}
+	return configs
+}
 
-	for {
-		n := 2 + rand.Intn(4)
-		configs := RandomConfigs(n)
-		table := RandomAttractionTable(n)
+func Run() {
+	// if false {
+	// 	n := 2 + rand.Intn(4)
+	// 	configs := RandomConfigs(n)
+	// 	table := RandomAttractionTable(n)
+	// 	model := NewModel(
+	// 		width, height, particles, blurRadius, blurPasses, zoomFactor,
+	// 		configs, table)
+	// 	frames(model, 3)
+	// }
+
+	for _, f := range []float32{3} {
+
+		// n := 2 + rand.Intn(4)
+		configs := ConfigVaryRotationAngle([]float32{f})
+		table := RandomAttractionTable(4)
 		model := NewModel(
 			width, height, particles, blurRadius, blurPasses, zoomFactor,
 			configs, table)
 		start := time.Now()
-		one(model, iterations)
+		frames(model, 10)
+		// one(model, iterations)
 		fmt.Println(time.Since(start))
 	}
 }

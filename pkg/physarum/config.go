@@ -64,6 +64,7 @@ func RandomConfigs(n int) []Config {
 	return configs
 }
 
+// 
 func RandomAttractionTable(n int) [][]float32 {
 	normal := func(mean, std float32) float32 {
 		return mean + float32(rand.NormFloat64())*std
