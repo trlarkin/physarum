@@ -19,15 +19,21 @@ type Model struct {
 	Configs         []Config
 	AttractionTable [][]float32
 
-	Grids     []*Grid
+	//Although this is a 1d array, it represents 2d data
+	Grids []*Grid
+
+	//List of particles in simulation
 	Particles []Particle
+
+	//Food map, represents 2d data
+	FoodMap []float32
 
 	Iteration int
 }
 
 func NewModel(
 	w, h, numParticles, blurRadius, blurPasses int, zoomFactor float32,
-	configs []Config, attractionTable [][]float32) *Model {
+	configs []Config, attractionTable [][]float32, foodMap []float32) *Model {
 
 	grids := make([]*Grid, len(configs))
 	numParticlesPerConfig := int(math.Ceil(
@@ -36,7 +42,7 @@ func NewModel(
 	particles := make([]Particle, actualNumParticles)
 	m := &Model{
 		w, h, blurRadius, blurPasses, zoomFactor,
-		configs, attractionTable, grids, particles, 0}
+		configs, attractionTable, grids, particles, foodMap, 0}
 	m.StartOver()
 	return m
 }
@@ -122,12 +128,21 @@ func (m *Model) Step() {
 		for i := range grid.Temp {
 			grid.Temp[i] = 0
 		}
+
 		for i, other := range m.Grids {
 			factor := m.AttractionTable[c][i]
 			for j, value := range other.Data {
 				grid.Temp[j] += value * factor
 			}
 		}
+
+		//This is the hack for food, write values directly onto trail map
+		for i := 0; i < len(grid.Temp); i++ {
+			if m.FoodMap[i] != 0 {
+				grid.Temp[i] = m.FoodMap[i]
+			}
+		}
+
 		wg.Done()
 	}
 

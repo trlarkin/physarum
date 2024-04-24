@@ -42,6 +42,10 @@ func (g *Grid) Add(x, y, a float32) {
 	g.Data[g.Index(x, y)] += a
 }
 
+func (g *Grid) SetTemp(x, y, a float32) {
+	g.Temp[g.Index(x, y)] = a
+}
+
 func (g *Grid) BoxBlur(radius, iterations int, decayFactor float32) {
 	if iterations < 1 {
 		for i := range g.Data {
