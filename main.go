@@ -11,5 +11,7 @@ func main() {
 	//Set a static seed so we get the same results everytime
 	rand.Seed(42)
 
-	physarum.Run()
+	// physarum.Run()
+	physarum.Tristan()
+
 }

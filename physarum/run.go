@@ -14,23 +14,29 @@ const (
 	width      = 1 << 9
 	height     = 1 << 9
 	particles  = 1 << 21
-	iterations = 2000
-	blurRadius = 1
+	iterations = 20000
+	blurRadius = 4
 	blurPasses = 2
 	zoomFactor = 1
 	foodPath   = "../food.png"
 )
 
 // just produce the final frame
-func one(model *Model, iterations int) {
+func one(model *Model, iterations int, path0 string) {
 	now := time.Now().UTC().UnixNano() / 1000
 	path := fmt.Sprintf("out%d.png", now)
+	if path0 != "" {
+		path = fmt.Sprintf("out_%s.png", path0)
+	}
 	fmt.Println()
 	fmt.Println(path)
 	fmt.Println(len(model.Particles), "particles")
 	// PrintConfigs(model.Configs, model.AttractionTable)
 	// SummarizeConfigs(model.Configs)
 	for i := 0; i < iterations; i++ {
+		if i%(iterations/10) == 0 {
+			fmt.Println(i/(iterations/10)*10, "%")
+		}
 		model.Step()
 	}
 	palette := RandomPalette()
@@ -67,14 +73,14 @@ func frames(model *Model, rate int) {
 func ConfigVaryRotationAngle(as []float32) []Config {
 	n := len(as)
 	configs := make([]Config, n)
-	for index, a := range as {
+	for index, _ := range as {
 		configs[index] = Config{
 			SensorAngle:      Radians(45),
-			SensorDistance:   32,
-			RotationAngle:    Radians(a),
+			SensorDistance:   8,
+			RotationAngle:    Radians(45),
 			StepDistance:     1,
-			DepositionAmount: 5,
-			DecayFactor:      0.1,
+			DepositionAmount: 2,
+			DecayFactor:      0.05,
 		}
 	}
 	return configs
@@ -138,4 +144,28 @@ func Run() {
 		width, height, particles, blurRadius, blurPasses, zoomFactor,
 		configs, table, foodMap)
 	frames(model, 10)
+}
+
+func Tristan() {
+	foodMap := readFood("foodSmallWorld.png", 100.0)
+	// n := 2 + rand.Intn(4)
+	n := 3
+	table := RandomAttractionTable(n)
+	configs := ConfigVaryRotationAngle([]float32{35})
+	// for _, p := range []int{17, 18, 19, 20, 21, 22} {
+	fmt.Print(table[0])
+	fmt.Println()
+	model := NewModel(
+		1<<9,    // width
+		1<<9,    // height
+		1<<17,   // numParticles
+		1,       // blurRadius
+		2,       // blurPasses
+		1,       // zoomFactor
+		configs, // configs
+		table,   // attractionTable
+		foodMap) // foodMap
+	frames(model, 100)
+	// one(model, 10000, "neighborhood2")
+	// }
 }

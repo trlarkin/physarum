@@ -139,7 +139,7 @@ func (m *Model) Step() {
 		//This is the hack for food, write values directly onto trail map
 		for i := 0; i < len(grid.Temp); i++ {
 			if m.FoodMap[i] != 0 {
-				grid.Temp[i] = m.FoodMap[i]
+				grid.Temp[i] += m.FoodMap[i]
 			}
 		}
 
@@ -178,6 +178,9 @@ func (m *Model) Data() [][]float32 {
 	for i, grid := range m.Grids {
 		result[i] = make([]float32, len(grid.Data))
 		copy(result[i], grid.Data)
+		for j, elem := range m.FoodMap {
+			result[i][j] += elem
+		}
 	}
 	return result
 }
