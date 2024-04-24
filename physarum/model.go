@@ -51,11 +51,30 @@ func (m *Model) StartOver() {
 	numParticlesPerConfig := len(m.Particles) / len(m.Configs)
 	m.Particles = m.Particles[:0]
 	m.Iteration = 0
+	//Modify to spawn in certain region
+	startX := float32(m.W) * 3 / 8
+	endX := float32(m.W) * 5 / 8
+	startY := float32(m.H) * 3 / 8
+	endY := float32(m.H) * 5 / 8
+	regionWidth := endX - startX
+	regionHeight := endY - startY
+
 	for c := range m.Configs {
 		m.Grids[c] = NewGrid(m.W, m.H)
+		//Uncomment for spawn across entire grid
+
+		// for i := 0; i < numParticlesPerConfig; i++ {
+		// 	x := rand.Float32() * float32(m.W)
+		// 	y := rand.Float32() * float32(m.H)
+		// 	a := rand.Float32() * 2 * math.Pi
+		// 	p := Particle{x, y, a, uint32(c)}
+		// 	m.Particles = append(m.Particles, p)
+		// }
+
+		//Uncomment for specific spawn region
 		for i := 0; i < numParticlesPerConfig; i++ {
-			x := rand.Float32() * float32(m.W)
-			y := rand.Float32() * float32(m.H)
+			x := startX + rand.Float32()*regionWidth
+			y := startY + rand.Float32()*regionHeight
 			a := rand.Float32() * 2 * math.Pi
 			p := Particle{x, y, a, uint32(c)}
 			m.Particles = append(m.Particles, p)

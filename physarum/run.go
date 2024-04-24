@@ -18,7 +18,7 @@ const (
 	blurRadius = 4
 	blurPasses = 2
 	zoomFactor = 1
-	foodPath   = "../food.png"
+	foodPath   = "../foodED.png"
 )
 
 // just produce the final frame
@@ -136,18 +136,31 @@ func Run() {
 	foodMap := readFood(foodPath, 5.0)
 	// n := 2 + rand.Intn(4)
 	n := 3
-	configs := RandomConfigs(n)
+	// configs := RandomConfigs(n)
+	configs := ConfigVaryRotationAngle([]float32{35})
 	table := RandomAttractionTable(n)
 	fmt.Print(table[0])
 	fmt.Println()
 	model := NewModel(
 		width, height, particles, blurRadius, blurPasses, zoomFactor,
 		configs, table, foodMap)
-	frames(model, 10)
+
+	// model := NewModel(
+	// 	1<<9,    // width
+	// 	1<<9,    // height
+	// 	1<<20,   // numParticles
+	// 	1,       // blurRadius
+	// 	2,       // blurPasses
+	// 	1,       // zoomFactor
+	// 	configs, // configs
+	// 	table,   // attractionTable
+	// 	foodMap) // foodMap
+
+	frames(model, 100)
 }
 
 func Tristan() {
-	foodMap := readFood("foodSmallWorld.png", 100.0)
+	foodMap := readFood("../foodED.png", 100.0)
 	// n := 2 + rand.Intn(4)
 	n := 3
 	table := RandomAttractionTable(n)
