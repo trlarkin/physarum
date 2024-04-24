@@ -18,7 +18,7 @@ def create_gif(directory: str):
         images.append(imageio.imread(filepath))
 
     # Save the images as a GIF animation
-    output_file = os.path.join(directory, f'{directory.split('/')[-1]}.gif')
+    output_file = os.path.join(directory, f'animation.gif')
     imageio.mimsave(output_file, images)
 
     print(f"GIF animation saved as '{output_file}'")
