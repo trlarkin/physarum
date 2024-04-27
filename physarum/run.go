@@ -13,13 +13,18 @@ import (
 const (
 	width      = 1 << 9
 	height     = 1 << 9
-	particles  = 1 << 21
-	iterations = 20000
-	blurRadius = 4
+	particles  = 1 << 20
+	iterations = 5000
+	blurRadius = 1
 	blurPasses = 2
 	zoomFactor = 1
-	foodPath   = "../foodED.png"
 )
+
+// Paths to food files you want to use
+var foodPaths = []string{"../foodSmallWorld.png", "../foodSmallWorldRemoved.png"}
+
+// Highest iteration number food file will take place for
+var foodIters = []int{2500, 5000}
 
 // just produce the final frame
 func one(model *Model, iterations int, path0 string) {
@@ -133,34 +138,42 @@ func readFood(filename string, normMax float32) []float32 {
 
 func Run() {
 
-	foodMap := readFood(foodPath, 5.0)
+	var foodMap [][]float32
+	for _, path := range foodPaths {
+		fmt.Println("Reading food map: ")
+		fmt.Println(path)
+		foodArr := readFood(path, 5.0)
+		foodMap = append(foodMap, foodArr)
+	}
+
 	// n := 2 + rand.Intn(4)
-	n := 3
-	// configs := RandomConfigs(n)
-	configs := ConfigVaryRotationAngle([]float32{35})
+	n := 2
+	configs := RandomConfigs(n)
+	// config := &Config{
+	// 	SensorAngle:      45,
+	// 	SensorDistance:   50,
+	// 	RotationAngle:    10,
+	// 	StepDistance:     1,
+	// 	DepositionAmount: 5,
+	// 	DecayFactor:      0.1,
+	// }
+	// configs := []Config{*config}
 	table := RandomAttractionTable(n)
-	fmt.Print(table[0])
+	// table := [][]float32{{1}}
+	fmt.Print(len(table))
+	fmt.Print(len(table[0]))
 	fmt.Println()
 	model := NewModel(
 		width, height, particles, blurRadius, blurPasses, zoomFactor,
-		configs, table, foodMap)
+		configs, table, foodMap, foodIters)
 
-	// model := NewModel(
-	// 	1<<9,    // width
-	// 	1<<9,    // height
-	// 	1<<20,   // numParticles
-	// 	1,       // blurRadius
-	// 	2,       // blurPasses
-	// 	1,       // zoomFactor
-	// 	configs, // configs
-	// 	table,   // attractionTable
-	// 	foodMap) // foodMap
-
-	frames(model, 100)
+	frames(model, 20)
 }
 
 func Tristan() {
-	foodMap := readFood("../foodED.png", 100.0)
+	var foodMap [][]float32
+	foodMap = append(foodMap, readFood("../foodED.png", 100.0))
+	foodIters = []int{20000}
 	// n := 2 + rand.Intn(4)
 	n := 3
 	table := RandomAttractionTable(n)
@@ -169,15 +182,16 @@ func Tristan() {
 	fmt.Print(table[0])
 	fmt.Println()
 	model := NewModel(
-		1<<9,    // width
-		1<<9,    // height
-		1<<17,   // numParticles
-		1,       // blurRadius
-		2,       // blurPasses
-		1,       // zoomFactor
-		configs, // configs
-		table,   // attractionTable
-		foodMap) // foodMap
+		1<<9,      // width
+		1<<9,      // height
+		1<<17,     // numParticles
+		1,         // blurRadius
+		2,         // blurPasses
+		1,         // zoomFactor
+		configs,   // configs
+		table,     // attractionTable
+		foodMap,   // foodMap
+		foodIters) // foodIters
 	frames(model, 100)
 	// one(model, 10000, "neighborhood2")
 	// }

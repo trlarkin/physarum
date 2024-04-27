@@ -25,15 +25,19 @@ type Model struct {
 	//List of particles in simulation
 	Particles []Particle
 
-	//Food map, represents 2d data
-	FoodMap []float32
+	//Food map
+	//1st index is into different maps, len i
+	FoodMaps [][]float32
+
+	//How many iters each food map gets, should be len i
+	FoodIters []int
 
 	Iteration int
 }
 
 func NewModel(
 	w, h, numParticles, blurRadius, blurPasses int, zoomFactor float32,
-	configs []Config, attractionTable [][]float32, foodMap []float32) *Model {
+	configs []Config, attractionTable [][]float32, foodMaps [][]float32, foodIters []int) *Model {
 
 	grids := make([]*Grid, len(configs))
 	numParticlesPerConfig := int(math.Ceil(
@@ -42,7 +46,7 @@ func NewModel(
 	particles := make([]Particle, actualNumParticles)
 	m := &Model{
 		w, h, blurRadius, blurPasses, zoomFactor,
-		configs, attractionTable, grids, particles, foodMap, 0}
+		configs, attractionTable, grids, particles, foodMaps, foodIters, 0}
 	m.StartOver()
 	return m
 }
@@ -155,10 +159,17 @@ func (m *Model) Step() {
 			}
 		}
 
+		foodIndex := 0
+		for i, iterVal := range m.FoodIters {
+			foodIndex = i
+			if m.Iteration < iterVal {
+				break
+			}
+		}
 		//This is the hack for food, write values directly onto trail map
 		for i := 0; i < len(grid.Temp); i++ {
-			if m.FoodMap[i] != 0 {
-				grid.Temp[i] += m.FoodMap[i]
+			if m.FoodMaps[foodIndex][i] != 0 {
+				grid.Temp[i] += m.FoodMaps[foodIndex][i]
 			}
 		}
 
@@ -194,10 +205,17 @@ func (m *Model) Step() {
 
 func (m *Model) Data() [][]float32 {
 	result := make([][]float32, len(m.Grids))
+	foodIndex := 0
+	for i, iterVal := range m.FoodIters {
+		foodIndex = i
+		if m.Iteration < iterVal {
+			break
+		}
+	}
 	for i, grid := range m.Grids {
 		result[i] = make([]float32, len(grid.Data))
 		copy(result[i], grid.Data)
-		for j, elem := range m.FoodMap {
+		for j, elem := range m.FoodMaps[foodIndex] {
 			result[i][j] += elem
 		}
 	}
