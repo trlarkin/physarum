@@ -18,7 +18,7 @@ const (
 	blurRadius = 4
 	blurPasses = 2
 	zoomFactor = 1
-	foodPath   = "../foodED.png"
+	foodPath   = "../foodBigNode.png"
 )
 
 // just produce the final frame
