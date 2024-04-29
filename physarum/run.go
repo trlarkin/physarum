@@ -14,7 +14,7 @@ const (
 	width      = 1 << 9
 	height     = 1 << 9
 	particles  = 1 << 20
-	iterations = 5000
+	iterations = 14000
 	blurRadius = 1
 	blurPasses = 2
 	zoomFactor = 1
@@ -170,29 +170,101 @@ func Run() {
 	frames(model, 20)
 }
 
+// config that tristan uses
+var configsT = []Config{
+	Config{
+		SensorAngle:      Radians(45),
+		SensorDistance:   8,
+		RotationAngle:    Radians(45),
+		StepDistance:     1,
+		DepositionAmount: 2,
+		DecayFactor:      0.05}}
+
 func Tristan() {
-	var foodMap [][]float32
-	foodMap = append(foodMap, readFood("../foodED.png", 100.0))
-	foodIters = []int{20000}
+
+	var foodMap [][]float32 // Paths to food files you want to use
+	var foodPathsT = []string{
+		"foodChanging/foodSmallWorld0.png",
+		"foodChanging/foodSmallWorld1.png",
+		"foodChanging/foodSmallWorld2.png",
+		"foodChanging/foodSmallWorld3.png",
+		"foodChanging/foodSmallWorld4.png",
+		"foodChanging/foodSmallWorld5.png",
+		"foodChanging/foodSmallWorld6.png"}
+	for _, path := range foodPathsT {
+		fmt.Println("Reading food map: ")
+		fmt.Println(path)
+		foodArr := readFood(path, 5.0)
+		foodMap = append(foodMap, foodArr)
+	}
+	// Highest iteration number food file will take place for
+	var foodItersT = []int{2000, 4000, 6000, 8000, 10000, 12000, 1400}
+
+	// foodMap = append(foodMap, readFood("../foodED.png", 100.0))
+	// foodIters = []int{20000}
 	// n := 2 + rand.Intn(4)
 	n := 3
 	table := RandomAttractionTable(n)
-	configs := ConfigVaryRotationAngle([]float32{35})
+	// configs := ConfigVaryRotationAngle([]float32{35})
 	// for _, p := range []int{17, 18, 19, 20, 21, 22} {
 	fmt.Print(table[0])
 	fmt.Println()
 	model := NewModel(
-		1<<9,      // width
-		1<<9,      // height
-		1<<17,     // numParticles
-		1,         // blurRadius
-		2,         // blurPasses
-		1,         // zoomFactor
-		configs,   // configs
-		table,     // attractionTable
-		foodMap,   // foodMap
-		foodIters) // foodIters
+		1<<9,       // width
+		1<<9,       // height
+		1<<17,      // numParticles
+		1,          // blurRadius
+		2,          // blurPasses
+		1,          // zoomFactor
+		configsT,   // configs
+		table,      // attractionTable
+		foodMap,    // foodMap
+		foodItersT) // foodIters
 	frames(model, 100)
 	// one(model, 10000, "neighborhood2")
+	// }
+}
+
+func Tristan2() {
+	var foodMap [][]float32 // Paths to food files you want to use
+	// var foodPathsT = []string{
+	// 	"foodSizes/foodSmallWorld02.png",
+	// 	"foodSizes/foodSmallWorld04.png",
+	// 	"foodSizes/foodSmallWorld06.png",
+	// 	"foodSizes/foodSmallWorld08.png",
+	// 	"foodSizes/foodSmallWorld10.png"}
+	var foodPathsT = []string{"foodSmallWorldContained.png"}
+	for _, path := range foodPathsT {
+		fmt.Println("Reading food map: ")
+		fmt.Println(path)
+		foodArr := readFood(path, 5.0)
+		foodMap = append(foodMap, foodArr)
+	}
+	// Highest iteration number food file will take place for
+	var foodItersT = []int{6000}
+
+	// foodMap = append(foodMap, readFood("../foodED.png", 100.0))
+	// foodIters = []int{20000}
+	// n := 2 + rand.Intn(4)
+	n := 3
+	table := RandomAttractionTable(n)
+	// configs := ConfigVaryRotationAngle([]float32{35})
+	for _, food := range foodMap {
+		fmt.Print(table[0])
+		fmt.Println()
+		model := NewModel(
+			1<<9,              // width
+			1<<9,              // height
+			1<<17,             // numParticles
+			1,                 // blurRadius
+			2,                 // blurPasses
+			1,                 // zoomFactor
+			configsT,          // configs
+			table,             // attractionTable
+			[][]float32{food}, // foodMap
+			foodItersT)        // foodIters
+		// frames(model, 100)
+		one(model, 10000, fmt.Sprintf("contained-SmallWorld"))
+	}
 	// }
 }
