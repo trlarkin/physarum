@@ -12,7 +12,6 @@ func main() {
 	rand.Seed(42)
 
 	// physarum.Run()
-	physarum.Edgar()
-	// physarum.Tristan()
+	physarum.Tristan2()
 
 }
