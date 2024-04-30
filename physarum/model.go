@@ -25,15 +25,19 @@ type Model struct {
 	//List of particles in simulation
 	Particles []Particle
 
-	//Food map, represents 2d data
-	FoodMap []float32
+	//Food map
+	//1st index is into different maps, len i
+	FoodMaps [][]float32
+
+	//How many iters each food map gets, should be len i
+	FoodIters []int
 
 	Iteration int
 }
 
 func NewModel(
 	w, h, numParticles, blurRadius, blurPasses int, zoomFactor float32,
-	configs []Config, attractionTable [][]float32, foodMap []float32) *Model {
+	configs []Config, attractionTable [][]float32, foodMaps [][]float32, foodIters []int) *Model {
 
 	grids := make([]*Grid, len(configs))
 	numParticlesPerConfig := int(math.Ceil(
@@ -42,7 +46,7 @@ func NewModel(
 	particles := make([]Particle, actualNumParticles)
 	m := &Model{
 		w, h, blurRadius, blurPasses, zoomFactor,
-		configs, attractionTable, grids, particles, foodMap, 0}
+		configs, attractionTable, grids, particles, foodMaps, foodIters, 0}
 	m.StartOver()
 	return m
 }
@@ -52,10 +56,10 @@ func (m *Model) StartOver() {
 	m.Particles = m.Particles[:0]
 	m.Iteration = 0
 	//Modify to spawn in certain region
-	startX := float32(m.W) * 3 / 8
-	endX := float32(m.W) * 5 / 8
-	startY := float32(m.H) * 3 / 8
-	endY := float32(m.H) * 5 / 8
+	startX := float32(m.W) * 3 / 10
+	endX := float32(m.W) * 7 / 10
+	startY := float32(m.H) * 3 / 10
+	endY := float32(m.H) * 7 / 10
 	regionWidth := endX - startX
 	regionHeight := endY - startY
 
@@ -83,18 +87,34 @@ func (m *Model) StartOver() {
 }
 
 func (m *Model) Step() {
+	//Circular containment region dimensions
+	centerX := float32(m.W) / 2
+	centerY := float32(m.H) / 2
+	radius := float32(m.W) / 2 // Half the diameter, which is half the width
+
 	updateParticle := func(rnd *rand.Rand, i int) {
 		p := m.Particles[i]
 		config := m.Configs[p.C]
 		grid := m.Grids[p.C]
 
-		// u := p.X / float32(m.W)
-		// v := p.Y / float32(m.H)
-
+		// Calculate new potential position based on current heading and step distance
+		stepDistance := config.StepDistance * m.ZoomFactor
+		newX := p.X + float32(math.Cos(float64(p.A)))*stepDistance
+		newY := p.Y + float32(math.Sin(float64(p.A)))*stepDistance
+		rotationAngle := config.RotationAngle
 		sensorDistance := config.SensorDistance * m.ZoomFactor
 		sensorAngle := config.SensorAngle
-		rotationAngle := config.RotationAngle
-		stepDistance := config.StepDistance * m.ZoomFactor
+
+		// Check if new position is within the circular boundary
+		dx := newX - centerX
+		dy := newY - centerY
+		if dx*dx+dy*dy > radius*radius {
+			// Adjust the angle when it's about to move out of the boundary
+			angleToCenter := math.Atan2(float64(centerY-p.Y), float64(centerX-p.X))
+			p.A = float32(2*angleToCenter - float64(p.A) + math.Pi) // Reflect angle
+			newX = p.X + float32(math.Cos(float64(p.A)))*stepDistance
+			newY = p.Y + float32(math.Sin(float64(p.A)))*stepDistance
+		}
 
 		xc := p.X + cos(p.A)*sensorDistance
 		yc := p.Y + sin(p.A)*sensorDistance
@@ -107,12 +127,42 @@ func (m *Model) Step() {
 		R := grid.GetTemp(xr, yr)
 
 		da := rotationAngle * direction(rnd, C, L, R)
-		// da := rotationAngle * weightedDirection(rnd, C, L, R)
 		p.A = Shift(p.A+da, 2*math.Pi)
-		p.X = Shift(p.X+cos(p.A)*stepDistance, float32(m.W))
-		p.Y = Shift(p.Y+sin(p.A)*stepDistance, float32(m.H))
+		p.X = Shift(newX, float32(m.W))
+		p.Y = Shift(newY, float32(m.H))
 		m.Particles[i] = p
 	}
+
+	// updateParticle := func(rnd *rand.Rand, i int) {
+	// 	p := m.Particles[i]
+	// 	config := m.Configs[p.C]
+	// 	grid := m.Grids[p.C]
+
+	// 	// u := p.X / float32(m.W)
+	// 	// v := p.Y / float32(m.H)
+
+	// 	sensorDistance := config.SensorDistance * m.ZoomFactor
+	// 	sensorAngle := config.SensorAngle
+	// 	rotationAngle := config.RotationAngle
+	// 	stepDistance := config.StepDistance * m.ZoomFactor
+
+	// 	xc := p.X + cos(p.A)*sensorDistance
+	// 	yc := p.Y + sin(p.A)*sensorDistance
+	// 	xl := p.X + cos(p.A-sensorAngle)*sensorDistance
+	// 	yl := p.Y + sin(p.A-sensorAngle)*sensorDistance
+	// 	xr := p.X + cos(p.A+sensorAngle)*sensorDistance
+	// 	yr := p.Y + sin(p.A+sensorAngle)*sensorDistance
+	// 	C := grid.GetTemp(xc, yc)
+	// 	L := grid.GetTemp(xl, yl)
+	// 	R := grid.GetTemp(xr, yr)
+
+	// 	da := rotationAngle * direction(rnd, C, L, R)
+	// 	// da := rotationAngle * weightedDirection(rnd, C, L, R)
+	// 	p.A = Shift(p.A+da, 2*math.Pi)
+	// 	p.X = Shift(p.X+cos(p.A)*stepDistance, float32(m.W))
+	// 	p.Y = Shift(p.Y+sin(p.A)*stepDistance, float32(m.H))
+	// 	m.Particles[i] = p
+	// }
 
 	updateParticles := func(wi, wn int, wg *sync.WaitGroup) {
 		seed := int64(m.Iteration)<<8 | int64(wi)
@@ -155,10 +205,17 @@ func (m *Model) Step() {
 			}
 		}
 
+		foodIndex := 0
+		for i, iterVal := range m.FoodIters {
+			foodIndex = i
+			if m.Iteration < iterVal {
+				break
+			}
+		}
 		//This is the hack for food, write values directly onto trail map
 		for i := 0; i < len(grid.Temp); i++ {
-			if m.FoodMap[i] != 0 {
-				grid.Temp[i] += m.FoodMap[i]
+			if m.FoodMaps[foodIndex][i] != 0 {
+				grid.Temp[i] += m.FoodMaps[foodIndex][i]
 			}
 		}
 
@@ -194,10 +251,17 @@ func (m *Model) Step() {
 
 func (m *Model) Data() [][]float32 {
 	result := make([][]float32, len(m.Grids))
+	foodIndex := 0
+	for i, iterVal := range m.FoodIters {
+		foodIndex = i
+		if m.Iteration < iterVal {
+			break
+		}
+	}
 	for i, grid := range m.Grids {
 		result[i] = make([]float32, len(grid.Data))
 		copy(result[i], grid.Data)
-		for j, elem := range m.FoodMap {
+		for j, elem := range m.FoodMaps[foodIndex] {
 			result[i][j] += elem
 		}
 	}
